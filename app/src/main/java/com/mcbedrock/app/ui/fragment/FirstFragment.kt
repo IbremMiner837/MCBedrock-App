@@ -1,50 +1,32 @@
 package com.mcbedrock.app.ui.fragment
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.mcbedrock.app.NewsItemsAdapter
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.mcbedrock.app.R
-import com.mcbedrock.app.apiservice.ApiService
+import com.mcbedrock.app.adapter.NewsAdapter
 import com.mcbedrock.app.databinding.FragmentFirstBinding
-import com.mcbedrock.app.repository.NewsRepository
 import com.mcbedrock.app.viewmodel.NewsViewModel
-import com.mcbedrock.app.viewmodel.NewsViewModelFactory
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class FirstFragment : Fragment() {
-    private lateinit var viewModel: NewsViewModel
-    private lateinit var adapter: NewsItemsAdapter
+    var viewModel: NewsViewModel? = null
+    var recyclerView: RecyclerView? = null
+    var adapter: NewsAdapter? = null
+    var layoutManager: LayoutManager? = null
 
     private var _binding: FragmentFirstBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val apiService = Retrofit.Builder()
-            .baseUrl("https://launchercontent.mojang.com/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
-
-        val repository = NewsRepository(apiService)
-        val viewModelFactory = NewsViewModelFactory(repository)
-        viewModel = ViewModelProvider(this, viewModelFactory).get(NewsViewModel::class.java)
-
-        viewModel.items.observe(this, Observer {
-            adapter.submitList(it)  // Use submitList instead of recreating the adapter
-        })
-
-        viewModel.fetchItems()
     }
 
     override fun onCreateView(
@@ -57,10 +39,22 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val recyclerView: RecyclerView = binding.recyclerview
-        recyclerView.layoutManager = LinearLayoutManager(requireActivity())
-        adapter = NewsItemsAdapter(emptyList())
-        recyclerView.adapter = adapter
+        recyclerView = _binding?.recyclerview
+        layoutManager = LinearLayoutManager(requireActivity())
+        recyclerView!!.layoutManager = layoutManager
+
+        viewModel = ViewModelProvider(this)[NewsViewModel::class.java]
+        viewModel!!.getNewsList.observe(viewLifecycleOwner) { newsEntry ->
+            if (newsEntry != null) {
+                Log.e("NewsFragment", "NewsList: " + newsEntry.get(0).entries.get(0).title)
+
+                if (newsEntry != null) {
+                    adapter = NewsAdapter(requireActivity(), newsEntry)
+                    adapter!!.notifyDataSetChanged()
+                    recyclerView!!. adapter = adapter
+                }
+            }
+        }
 
         binding.buttonFirst.setOnClickListener {
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
