@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textview.MaterialTextView
 import com.mcbedrock.app.data.NewsItem
 
-class NewsItemsAdapter(private val items: List<NewsItem>) : RecyclerView.Adapter<NewsItemsAdapter.ViewHolder>() {
+class NewsItemsAdapter(private val items: MutableList<NewsItem>) : RecyclerView.Adapter<NewsItemsAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_news_card, parent, false)
@@ -21,6 +21,14 @@ class NewsItemsAdapter(private val items: List<NewsItem>) : RecyclerView.Adapter
 
     override fun getItemCount(): Int {
         return items.size
+    }
+
+    fun submitList(newItems: List<NewsItem>?) {
+        newItems?.let {
+            items.clear()
+            items.addAll(it)
+            notifyDataSetChanged()
+        }
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
